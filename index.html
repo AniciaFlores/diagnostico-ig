@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Tienes el carro o la gasolina? — Diagnóstico</title>
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --surface: #ffffff;
+    --text: #1f2420;
+    --text-muted: #5a6058;
+    --accent: #1f6f54;
+    --accent-dark: #164e3b;
+    --accent-soft: #e3f0ea;
+    --border: #e2ddd4;
+    --warn: #b5651d;
+    --track: #ece8e1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141815;
+      --surface: #1c211d;
+      --text: #eef0ec;
+      --text-muted: #a9b0a5;
+      --accent: #4fae87;
+      --accent-dark: #7ecdae;
+      --accent-soft: #223a30;
+      --border: #2c322c;
+      --warn: #e0a35c;
+      --track: #262c26;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141815;
+    --surface: #1c211d;
+    --text: #eef0ec;
+    --text-muted: #a9b0a5;
+    --accent: #4fae87;
+    --accent-dark: #7ecdae;
+    --accent-soft: #223a30;
+    --border: #2c322c;
+    --warn: #e0a35c;
+    --track: #262c26;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    padding: 24px 16px 60px;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 26px;
+    line-height: 1.25;
+    margin: 0 0 12px;
+    color: var(--text);
+  }
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 16px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: var(--track);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .q-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .q-text {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .q-help {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: -14px;
+    margin-bottom: 20px;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .opt-btn {
+    text-align: left;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .opt-btn:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+  }
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 0;
+  }
+  .back-btn:disabled {
+    visibility: hidden;
+  }
+  .start-btn, .cta-btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 14px 22px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+  }
+  .start-btn:hover, .cta-btn:hover { background: var(--accent-dark); }
+
+  .result-tag {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .result-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .result-body p {
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .gap-list {
+    margin: 18px 0;
+    padding: 0;
+    list-style: none;
+  }
+  .gap-list li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    font-size: 14.5px;
+  }
+  .gap-list li:first-child { border-top: none; }
+  .dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--warn);
+    margin-top: 7px;
+  }
+  .dot.ok { background: var(--accent); }
+  .footer-note {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 20px;
+  }
+  .brand {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 30px;
+    letter-spacing: 0.03em;
+  }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="intro">
+    <div class="eyebrow">Diagnóstico rápido</div>
+    <h1>¿Tienes el carro… o también la gasolina?</h1>
+    <p class="subtitle">Tienes la experiencia técnica. La pregunta es si ya tienes el sistema comercial para convertirla en clientes que pagan. 8 preguntas, 2 minutos.</p>
+    <div class="card">
+      <p style="margin:0 0 18px;font-size:14.5px;color:var(--text-muted);">Al final vas a ver exactamente dónde está tu brecha más grande — y qué mover primero.</p>
+      <button class="start-btn" onclick="startQuiz()">Empezar diagnóstico →</button>
+    </div>
+  </div>
+
+  <div id="quiz" class="hidden">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="card">
+      <div class="q-count" id="qCount"></div>
+      <div class="q-text" id="qText"></div>
+      <div class="q-help" id="qHelp"></div>
+      <div class="options" id="qOptions"></div>
+    </div>
+    <div class="nav-row">
+      <button class="back-btn" id="backBtn" onclick="goBack()">← Anterior</button>
+    </div>
+  </div>
+
+  <div id="result" class="hidden">
+    <div class="card">
+      <div class="result-tag" id="resultTag"></div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="result-body">
+        <p id="resultBody"></p>
+      </div>
+      <ul class="gap-list" id="gapList"></ul>
+    </div>
+    <div class="card" id="ctaCard">
+      <p style="margin:0 0 14px;font-size:15px;">¿Querés revisar esto en detalle y armar el paso a paso para tu caso puntual?</p>
+      <button class="cta-btn" onclick="sendCta()" id="ctaBtn">Quiero mi diagnóstico 1 a 1</button>
+      <div id="ctaMsgBox" class="hidden" style="margin-top:14px;">
+        <p style="margin:0 0 8px;font-size:13.5px;color:var(--text-muted);">Copiá este mensaje y enviámelo por LinkedIn o WhatsApp:</p>
+        <div id="ctaMsgText" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;margin-bottom:10px;"></div>
+        <button class="opt-btn" style="text-align:center;" onclick="copyCtaMsg()" id="copyBtn">Copiar mensaje</button>
+      </div>
+    </div>
+    <p class="footer-note">Este resultado es orientativo, basado en tus propias respuestas.</p>
+  </div>
+
+  <div class="brand">Autoridad Portátil · Ani Flores</div>
+</div>
+
+<script>
+const questions = [
+  {
+    text: "¿Tienes un problema específico y un tipo de cliente definido — o todavía dirías \"puedo ayudar en varias cosas\"?",
+    help: "Ej: \"resuelvo cuellos de botella en centros de distribución de PyMEs en crecimiento\" vs. \"tengo experiencia en logística\".",
+    options: ["Sí, está definido y lo puedo decir en una frase", "Más o menos, pero es muy amplio todavía", "No, sigo hablando de mi experiencia en general"]
+  },
+  {
+    text: "¿Sabes cuánto está dispuesta a pagar una empresa por resolver ese problema puntual?",
+    help: "No tu tarifa por hora ideal — lo que el mercado realmente paga.",
+    options: ["Sí, lo tengo bastante claro", "Tengo una idea aproximada", "No, nunca lo validé"]
+  },
+  {
+    text: "¿Tienes un sistema activo para encontrar clientes, o dependés de que te contacten por referidos o casualidad?",
+    help: "",
+    options: ["Tengo un sistema activo y constante", "Hago algo, pero es irregular", "Dependo casi por completo de referidos"]
+  },
+  {
+    text: "Si alguien te pregunta qué resultado garantizás, ¿podés responder en una frase clara?",
+    help: "",
+    options: ["Sí, tengo esa frase lista", "Podría armarla, pero improvisando", "No, terminaría explicando toda mi trayectoria"]
+  },
+  {
+    text: "¿Tienes casos o resultados concretos (números, antes/después) listos para mostrar a un prospecto?",
+    help: "",
+    options: ["Sí, documentados y listos para usar", "Los tengo en la cabeza, no armados", "No los tengo identificados"]
+  },
+  {
+    text: "¿Sabes si tu forma de vender va a ser por proyecto puntual, por suscripción mensual, o ambas?",
+    help: "",
+    options: ["Sí, ya lo decidí", "Tengo una intuición, no una decisión", "No lo pensé todavía"]
+  },
+  {
+    text: "Tu perfil de LinkedIn (u otro canal): ¿posiciona un problema concreto que resolvés, o es más bien un currículum?",
+    help: "",
+    options: ["Posiciona un problema y una oferta clara", "Es una mezcla de ambas cosas", "Es básicamente mi CV en otro formato"]
+  },
+  {
+    text: "¿Tienes un plan concreto para conseguir tu primer cliente pagante en los próximos 30 días?",
+    help: "",
+    options: ["Sí, con pasos y fechas", "Tengo intención, no plan", "No, todavía no lo pensé en esos términos"]
+  }
+];
+
+let current = 0;
+const answers = new Array(questions.length).fill(null);
+
+function startQuiz() {
+  document.getElementById('intro').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  document.getElementById('qCount').textContent = `Pregunta ${current + 1} de ${questions.length}`;
+  document.getElementById('qText').textContent = q.text;
+  document.getElementById('qHelp').textContent = q.help || '';
+  document.getElementById('qHelp').style.display = q.help ? 'block' : 'none';
+  document.getElementById('progressFill').style.width = ((current) / questions.length * 100) + '%';
+  document.getElementById('backBtn').disabled = current === 0;
+
+  const optsDiv = document.getElementById('qOptions');
+  optsDiv.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i);
+    optsDiv.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx) {
+  answers[current] = idx; // 0 = fuerte, 1 = medio, 2 = brecha
+  if (current < questions.length - 1) {
+    current++;
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function goBack() {
+  if (current > 0) {
+    current--;
+    renderQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+
+  const score = answers.reduce((sum, a) => sum + (2 - a), 0); // max 16
+  const gapCount = answers.filter(a => a === 2).length;
+  const midCount = answers.filter(a => a === 1).length;
+
+  let tag, title, body;
+  if (score >= 13) {
+    tag = 'Tienes el sistema';
+    title = 'Ya tienes carro y gasolina — ahora es momento de escalar.';
+    body = 'Tu experiencia técnica ya está convertida en una oferta clara con sistema comercial. Tu próximo paso no es construir desde cero, sino ordenar y escalar lo que ya funciona.';
+  } else if (score >= 7) {
+    tag = 'Tienes el carro, falta la gasolina';
+    title = 'Tu experiencia técnica es sólida. El sistema comercial todavía no.';
+    body = 'Este es el punto exacto en el que están la mayoría de los profesionales senior que dan el salto a la consultoría: tienen el conocimiento pero les falta traducirlo en una oferta con precio, nicho y sistema de prospección definidos. La buena noticia es que esto se construye, no se improvisa.';
+  } else {
+    tag = 'Falta estructura de base';
+    title = 'Tienes la trayectoria. Todavía no la estructura para venderla.';
+    body = 'Nada de esto significa que te falte capacidad — significa que tu experiencia técnica todavía no está traducida a una oferta de mercado. Es el mismo punto de partida de la mayoría de los consultores antes de armar su primer sistema comercial.';
+  }
+
+  lastResultTag = tag;
+  document.getElementById('resultTag').textContent = tag;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultBody').textContent = body;
+
+  const labels = [
+    'Oferta y nicho definidos',
+    'Precio de mercado validado',
+    'Sistema activo de prospección',
+    'Propuesta de resultado clara',
+    'Casos y resultados documentados',
+    'Modelo de venta decidido',
+    'Perfil posicionado (no currículum)',
+    'Plan concreto para el primer cliente'
+  ];
+  const gapList = document.getElementById('gapList');
+  gapList.innerHTML = '';
+  answers.forEach((a, i) => {
+    const li = document.createElement('li');
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (a === 0 ? ' ok' : '');
+    const span = document.createElement('span');
+    span.textContent = labels[i] + (a === 2 ? ' — brecha clara' : a === 1 ? ' — a medio construir' : ' — resuelto');
+    li.appendChild(dot);
+    li.appendChild(span);
+    gapList.appendChild(li);
+  });
+}
+
+let lastResultTag = '';
+
+function sendCta() {
+  const msg = `Hola Ani, hice el diagnóstico "¿Tienes el carro o la gasolina?" y mi resultado fue: "${lastResultTag}". Me gustaría agendar mi diagnóstico 1 a 1.`;
+  document.getElementById('ctaMsgText').textContent = msg;
+  document.getElementById('ctaMsgBox').classList.remove('hidden');
+  document.getElementById('ctaBtn').classList.add('hidden');
+}
+
+function copyCtaMsg() {
+  const text = document.getElementById('ctaMsgText').textContent;
+  const btn = document.getElementById('copyBtn');
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(fallback);
+  } else {
+    fallback();
+  }
+  btn.textContent = '¡Copiado!';
+  setTimeout(() => { btn.textContent = 'Copiar mensaje'; }, 1800);
+}
+</script>
+</body>
+</html>
